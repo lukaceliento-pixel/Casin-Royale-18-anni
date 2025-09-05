@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check-in Evento</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background: url('iniziale.jpg') no-repeat center center fixed; /* sfondo iniziale */
+      background-size: cover; /* si adatta a PC e telefono */
+      background-position: center;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      transition: background-image 1s ease-in-out;
+    }
+
+    /* ✅ Per i telefoni: fix per evitare bug di sfondo */
+    @media (max-width: 768px) {
+      body {
+        background-attachment: scroll;
+      }
+    }
+
+    .container {
+      text-align: center;
+      background: rgba(0,0,0,0.6);
+      padding: 30px;
+      border-radius: 20px;
+      max-width: 90%;
+    }
+
+    input {
+      padding: 10px;
+      margin: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1rem;
+      width: 200px;
+      max-width: 80%;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      border: none;
+      border-radius: 10px;
+      background: gold;
+      color: black;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .result {
+      display: none;
+      color: gold;
+    }
+
+    .result h1 {
+      font-size: 2.5rem;
+      margin: 20px 0;
+    }
+
+    .result h2 {
+      font-size: 1.8rem;
+      color: white;
+      margin-bottom: 20px;
+    }
+
+    .qr {
+      margin-top: 30px;
+    }
+
+    .qr img {
+      width: 180px;
+      max-width: 80%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="checkin">
+    <h1>Inserisci Nome e Cognome</h1>
+    <input type="text" id="nome" placeholder="Nome">
+    <input type="text" id="cognome" placeholder="Cognome"><br>
+    <button onclick="trovaTavolo()">Trova il tuo posto</button>
+  </div>
+
+  <div class="container result" id="result">
+    <h1 id="tavolo"></h1>
+    <h2>Benvenuto/a agente!</h2>
+    <h1 id="nomeCompleto"></h1>
+  </div>
+
+  <script>
+    const invitati = [
+      {nome: "Luca", cognome: "Celiento", tavolo: "Tav. 1 Blackjack Royal"},
+      {nome: "Francesca", cognome: "Chiarolanza", tavolo: "Tav. 1 Blackjack Royal"},
+      {nome: "Gaetano", cognome: "Crimaldi", tavolo: "Tav. 1 Blackjack Royal"},
+      {nome: "Francesco", cognome: "Califano", tavolo: "Tav. 1 Blackjack Royal"},
+      {nome: "Anja", cognome: "Califano", tavolo: "Tav. 1 Blackjack Royal"},
+      {nome: "Giovanni", cognome: "Scarfato", tavolo: "Tav. 1 Blackjack Royal"},
+      {nome: "Martina", cognome: "Crispino", tavolo: "Tav. 1 Blackjack Royal"},
+      {nome: "Anna", cognome: "Pizzo", tavolo: "Tav. 1 Blackjack Royal"},
+      {nome: "Giovanna", cognome: "De Rosa", tavolo: "Tav. 2 007 Lounge"},
+      {nome: "Pietro", cognome: "Celiento", tavolo: "Tav. 2 007 Lounge"},
+      {nome: "Pedro", cognome: "Bond", tavolo: "Tav. 2 007 Lounge"},
+      {nome: "Gianfranco", cognome: "Russo", tavolo: "Tav. 2 007 Lounge"},
+      {nome: "Giuseppina", cognome: "Falco", tavolo: "Tav. 2 007 Lounge"},
+      {nome: "Francesco", cognome: "De Rosa", tavolo: "Tav. 3 Casinò Mirage"},
+      {nome: "Maria", cognome: "Sessa", tavolo: "Tav. 3 Casinò Mirage"},
+      {nome: "Salvatore", cognome: "De Rosa", tavolo: "Tav. 3 Casinò Mirage"},
+      {nome: "Francesca", cognome: "Tassatore", tavolo: "Tav. 3 Casinò Mirage"},
+      {nome: "Sharon", cognome: "De Rosa", tavolo: "Tav. 3 Casinò Mirage"},
+      {nome: "Salvatore", cognome: "Grimaldi", tavolo: "Tav. 4 Golden"},
+      {nome: "Filomena", cognome: "Celiento", tavolo: "Tav. 4 Golden"},
+      {nome: "Pietro", cognome: "Grimaldi", tavolo: "Tav. 4 Golden"},
+      {nome: "Sara", cognome: "De Sury", tavolo: "Tav. 4 Golden"},
+      {nome: "Rosapia", cognome: "Grimaldi", tavolo: "Tav. 4 Golden"},
+      {nome: "Fiore", cognome: "Palmiero", tavolo: "Tav. 4 Golden"},
+      {nome: "Sofia", cognome: "Palmiero", tavolo: "Tav. 4 Golden"},
+      {nome: "Maria", cognome: "De Rosa", tavolo: "Tav. 5 Diamonds & Dice"},
+      {nome: "Alfredo", cognome: "Quaranta", tavolo: "Tav. 5 Diamonds & Dice"},
+      {nome: "Nunzia", cognome: "De Rosa", tavolo: "Tav. 5 Diamonds & Dice"},
+      {nome: "Salvatore", cognome: "Varriale", tavolo: "Tav. 5 Diamonds & Dice"},
+      {nome: "Nunzia", cognome: "Castricato", tavolo: "Tav. 5 Diamonds & Dice"},
+      {nome: "Fabio", cognome: "De Simone", tavolo: "Tav. 5 Diamonds & Dice"},
+      {nome: "Armando", cognome: "Romanucci", tavolo: "Tav. 5 Diamonds & Dice"},
+      {nome: "Francesco", cognome: "Romanucci", tavolo: "Tav. 6 Ace of Hearts"},
+      {nome: "Rosy", cognome: "Alborino", tavolo: "Tav. 6 Ace of Hearts"},
+      {nome: "Ilaria", cognome: "Quaranta", tavolo: "Tav. 6 Ace of Hearts"},
+      {nome: "Gregorio", cognome: "Galante", tavolo: "Tav. 6 Ace of Hearts"},
+      {nome: "Noemi", cognome: "Quaranta", tavolo: "Tav. 6 Ace of Hearts"},
+      {nome: "Vincenzo", cognome: "Vitagliano", tavolo: "Tav. 6 Ace of Hearts"},
+      {nome: "Marco", cognome: "Melone", tavolo: "Tav. 7 The High Rollers"},
+      {nome: "Luigi", cognome: "Scuotto", tavolo: "Tav. 7 The High Rollers"},
+      {nome: "Giorgia", cognome: "Germano", tavolo: "Tav. 7 The High Rollers"},
+      {nome: "Giusy", cognome: "Carozza", tavolo: "Tav. 7 The High Rollers"},
+      {nome: "Elisabetta", cognome: "Tedesco", tavolo: "Tav. 7 The High Rollers"},
+      {nome: "Giovanni", cognome: "Pascarella", tavolo: "Tav. 8 Roulette Rouge"},
+      {nome: "Carmine", cognome: "Rossi", tavolo: "Tav. 8 Roulette Rouge"},
+      {nome: "Andrea", cognome: "Bernieri", tavolo: "Tav. 8 Roulette Rouge"},
+      {nome: "Christian", cognome: "Russo", tavolo: "Tav. 8 Roulette Rouge"},
+      {nome: "Umberto", cognome: "Vitale", tavolo: "Tav. 8 Roulette Rouge"},
+      {nome: "Pietro", cognome: "Ginolfi", tavolo: "Tav. 8 Roulette Rouge"},
+      {nome: "Michele", cognome: "Bagnarola", tavolo: "Tav. 9 Poker Royal"},
+      {nome: "Salvatore", cognome: "Esposito", tavolo: "Tav. 9 Poker Royal"},
+      {nome: "Lucia", cognome: "Ferone", tavolo: "Tav. 9 Poker Royal"},
+      {nome: "Ludovico", cognome: "Ferone", tavolo: "Tav. 9 Poker Royal"},
+      {nome: "Giuseppe", cognome: "Pagano", tavolo: "Tav. 9 Poker Royal"},
+      {nome: "Antonio", cognome: "Palmiero", tavolo: "Tav. 9 Poker Royal"},
+      {nome: "Raffaele", cognome: "Palmiero", tavolo: "Tav. 9 Poker Royal"}
+    ];
+
+    function trovaTavolo() {
+      const nomeInput = document.getElementById('nome').value.trim().toLowerCase();
+      const cognomeInput = document.getElementById('cognome').value.trim().toLowerCase();
+      const invitato = invitati.find(i =>
+        i.nome.toLowerCase() === nomeInput &&
+        i.cognome.toLowerCase() === cognomeInput
+      );
+
+      if (invitato) {
+        // Cambia immagine di sfondo
+        document.body.style.backgroundImage = "url('finale.jpg')";
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundPosition = "center";
+
+        // Mostra il risultato
+        document.getElementById('tavolo').textContent = invitato.tavolo;
+        document.getElementById('nomeCompleto').textContent = invitato.nome + ' ' + invitato.cognome;
+        document.getElementById('checkin').style.display = 'none';
+        document.getElementById('result').style.display = 'block';
+      } else {
+        alert('Invitato non trovato. Controlla Nome e Cognome.');
+      }
+    }
+  </script>
+</body>
+</html>
